@@ -1,0 +1,29 @@
+{
+  "name":        "jleagle/imagga-api-client",
+  "keywords":    [
+    "imagga",
+    "image",
+    "recognition"
+  ],
+  "description": "A package to upload images to, and retrieve API information from Imagga.",
+  "license":     "MIT",
+  "authors":     [
+    {
+      "name":     "James Eagle",
+      "email":    "jimeagle@gmail.com",
+      "homepage": "http://jimeagle.com"
+    }
+  ],
+  "require":     {
+    "php":               ">=5.4",
+    "guzzlehttp/guzzle": "~5.0"
+  },
+  "require-dev": {
+    "krydos/json-rules-checker": "dev-master"
+  },
+  "autoload":    {
+    "psr-4": {
+      "Jleagle\\Imagga\\": "src/"
+    }
+  }
+}
