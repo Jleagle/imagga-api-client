@@ -26,7 +26,7 @@ class Imagga
    * @param string $apiKey
    * @param string $apiSecret
    */
-  function __construct($apiKey, $apiSecret)
+  public function __construct($apiKey, $apiSecret)
   {
     $this->_apiKey = $apiKey;
     $this->_apiSecret = $apiSecret;
