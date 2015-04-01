@@ -12,16 +12,22 @@ class Imagga
   /**
    * The URL to the API
    */
-  const API = 'http://api.imagga.com/v1';
+  const API = 'http://api.imagga.com/v1/';
 
   /**
    * @var string
    */
   private $_apiKey;
+
   /**
    * @var string
    */
   private $_apiSecret;
+
+  /**
+   * @var Client
+   */
+  private $_client;
 
   /**
    * @param string $apiKey
@@ -31,6 +37,12 @@ class Imagga
   {
     $this->_apiKey = $apiKey;
     $this->_apiSecret = $apiSecret;
+
+    $this->_client = new Client(
+      [
+        'base_url' => self::API
+      ]
+    );
   }
 
   /**
@@ -38,7 +50,7 @@ class Imagga
    */
   public function getUsage()
   {
-    return $this->_get('/usage');
+    return $this->_get('usage');
   }
 
   /**
@@ -66,7 +78,7 @@ class Imagga
       $query->add('url', $url);
     }
 
-    return $this->_get('/tagging?' . $query);
+    return $this->_get('tagging?' . $query);
   }
 
   /**
@@ -94,7 +106,7 @@ class Imagga
       $query->add('content', $content);
     }
 
-    return $this->_get('/tagging?' . $query);
+    return $this->_get('tagging?' . $query);
   }
 
   /**
@@ -116,7 +128,7 @@ class Imagga
       $query->add('url', $url);
     }
 
-    return $this->_get('/categorizations/' . $category . '?' . $query);
+    return $this->_get('categorizations/' . $category . '?' . $query);
   }
 
   /**
@@ -145,7 +157,7 @@ class Imagga
       $query->add('content', $content);
     }
 
-    return $this->_get('/categorizations/' . $category . '?' . $query);
+    return $this->_get('categorizations/' . $category . '?' . $query);
   }
 
   /**
@@ -153,7 +165,7 @@ class Imagga
    */
   public function getCategories()
   {
-    return $this->_get('/categorizers');
+    return $this->_get('categorizers');
   }
 
   /**
@@ -183,7 +195,7 @@ class Imagga
     $query->add('resolution', implode(',', $resolution));
     $query->add('no_scaling', $allowScale ? 0 : 1);
 
-    return $this->_get('/croppings?' . $query);
+    return $this->_get('croppings?' . $query);
   }
 
   /**
@@ -220,7 +232,7 @@ class Imagga
     $query->add('resolution', implode(',', $resolution));
     $query->add('no_scaling', $allowScale ? 0 : 1);
 
-    return $this->_get('/croppings?' . $query);
+    return $this->_get('croppings?' . $query);
   }
 
   /**
@@ -247,7 +259,7 @@ class Imagga
     $query->add('extract_overall_colors', $extractOverallColors ? 1 : 0);
     $query->add('extract_object_colors', $extractObjectColors ? 1 : 0);
 
-    return $this->_get('/colors?' . $query);
+    return $this->_get('colors?' . $query);
   }
 
   /**
@@ -281,7 +293,7 @@ class Imagga
     $query->add('extract_overall_colors', $extractOverallColors ? 1 : 0);
     $query->add('extract_object_colors', $extractObjectColors ? 1 : 0);
 
-    return $this->_get('/colors?' . $query);
+    return $this->_get('colors?' . $query);
   }
 
   /**
@@ -302,7 +314,7 @@ class Imagga
       'image' => new PostFile(basename($url), file_get_contents($url))
     ];
 
-    return $this->_post('/content', $params);
+    return $this->_post('content', $params);
   }
 
   /**
@@ -329,7 +341,7 @@ class Imagga
       'image' => new PostFile($filename, $data)
     ];
 
-    return $this->_post('/content', $params);
+    return $this->_post('content', $params);
   }
 
   /**
@@ -339,7 +351,7 @@ class Imagga
    */
   public function contentDelete($contentId)
   {
-    return $this->_delete('/content/' . $contentId);
+    return $this->_delete('content/' . $contentId);
   }
 
   /**
@@ -352,10 +364,9 @@ class Imagga
    */
   private function _get($path, $params = [])
   {
-    $client = new Client();
     try
     {
-      $res = $client->get(
+      $res = $this->_client->get(
         self::API . $path,
         [
           'auth'  => [$this->_apiKey, $this->_apiSecret],
@@ -381,10 +392,9 @@ class Imagga
    */
   private function _post($path, $params = [])
   {
-    $client = new Client();
     try
     {
-      $res = $client->post(
+      $res = $this->_client->post(
         self::API . $path,
         [
           'auth' => [$this->_apiKey, $this->_apiSecret],
@@ -409,10 +419,9 @@ class Imagga
    */
   private function _delete($path)
   {
-    $client = new Client();
     try
     {
-      $res = $client->delete(
+      $res = $this->_client->delete(
         self::API . $path,
         [
           'auth' => [$this->_apiKey, $this->_apiSecret],
