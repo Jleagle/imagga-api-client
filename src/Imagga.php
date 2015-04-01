@@ -3,6 +3,7 @@ namespace Jleagle\Imagga;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Post\PostFile;
 use Jleagle\Imagga\Exceptions\ImaggaException;
 use Jleagle\Imagga\Helpers\QueryBuilder;
 
@@ -287,11 +288,45 @@ class Imagga
    * @param string $url
    *
    * @return array
+   *
+   * @throws ImaggaException
    */
-  public function contentUpload($url)
+  public function contentUploadByUrl($url)
   {
+    if(is_array($url))
+    {
+      throw new ImaggaException('You can only request one URL');
+    }
+
     $params = [
-      'image' => "@{$url};filename=" . basename($url)
+      'image' => new PostFile(basename($url), file_get_contents($url))
+    ];
+
+    return $this->_post('/content', $params);
+  }
+
+  /**
+   * @param string $data
+   * @param string $filename
+   *
+   * @throws ImaggaException
+   *
+   * @return array
+   */
+  public function contentUploadByData($data, $filename = null)
+  {
+    if(is_array($data))
+    {
+      throw new ImaggaException('You can only request one URL');
+    }
+
+    if(!$filename)
+    {
+      $filename = time() . '.png';
+    }
+
+    $params = [
+      'image' => new PostFile($filename, $data)
     ];
 
     return $this->_post('/content', $params);
@@ -312,6 +347,7 @@ class Imagga
    * @param array  $params
    *
    * @return array
+   *
    * @throws ImaggaException
    */
   private function _get($path, $params = [])
@@ -340,6 +376,7 @@ class Imagga
    * @param array  $params
    *
    * @return array
+   *
    * @throws ImaggaException
    */
   private function _post($path, $params = [])
@@ -367,6 +404,7 @@ class Imagga
    * @param string $path
    *
    * @return array
+   *
    * @throws ImaggaException
    */
   private function _delete($path)
