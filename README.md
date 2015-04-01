@@ -15,18 +15,18 @@ $imagga = new Imagga(
 Example API calls:
 
 ```php
-// Most API calls can handle either an array of images or a single image.
+// Most methods can take an array of either URLs or content IDs.
 $images = [
   'http://playground.imagga.com/static/img/example_photo.jpg',
   'http://playground.imagga.com/static/img/example_photos/japan-605234_1280.jpg'
 ];
 
 // Gets image tags
-$tags = $imagga->getTagsByUrl($images);
+$tags = $imagga->tags($images);
 
 // Get your current API usage levels
-$usage = $imagga->getUsage();
+$usage = $imagga->usage();
 
 // Get the colors of an image
-$colors = $imagga->getColorsByUrl($images);
+$colors = $imagga->colors($images);
 ```

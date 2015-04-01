@@ -38,72 +38,55 @@ class Imagga
     $this->_apiKey = $apiKey;
     $this->_apiSecret = $apiSecret;
 
-    $this->_client = new Client(
-      [
-        'base_url' => self::API
-      ]
-    );
+    $this->_client = new Client(['base_url' => self::API]);
   }
 
   /**
    * @return array
    */
-  public function getUsage()
+  public function usage()
   {
     return $this->_get('usage');
   }
 
   /**
-   * @param string|string[] $imageUrl
+   * @param string|string[] $image
    *
    * @return array
    *
    * @throws ImaggaException
    */
-  public function getTagsByUrl($imageUrl)
+  public function tags($image)
   {
-    if(!is_array($imageUrl))
+    if(!is_array($image))
     {
-      $imageUrl = [$imageUrl];
+      $image = [$image];
     }
 
-    if(count($imageUrl) > 10)
+    $query = new QueryBuilder();
+    $urls = $contents = 0;
+    foreach($image as $v)
+    {
+      if($this->_isContentId($v))
+      {
+        $contents++;
+        $query->add('content', $v);
+      }
+      else
+      {
+        $urls++;
+        $query->add('url', $v);
+      }
+    }
+
+    if($urls > 10)
     {
       throw new ImaggaException('You can only request ten URLs');
     }
 
-    $query = new QueryBuilder();
-    foreach($imageUrl as $url)
+    if($contents > 30)
     {
-      $query->add('url', $url);
-    }
-
-    return $this->_get('tagging?' . $query);
-  }
-
-  /**
-   * @param string|string[] $contentId
-   *
-   * @return array
-   *
-   * @throws ImaggaException
-   */
-  public function getTagsByContentId($contentId)
-  {
-    if(!is_array($contentId))
-    {
-      $contentId = [$contentId];
-    }
-
-    if(count($contentId) > 30)
-    {
-      throw new ImaggaException('You can only request thirty URLs');
-    }
-
-    $query = new QueryBuilder();
-    foreach($contentId as $content)
-    {
-      $query->add('content', $content);
+      throw new ImaggaException('You can only request thirty content IDs');
     }
 
     return $this->_get('tagging?' . $query);
@@ -111,50 +94,37 @@ class Imagga
 
   /**
    * @param string          $category
-   * @param string|string[] $imageUrl
-   *
-   * @return array
-   */
-  public function categorizeByUrl($category, $imageUrl)
-  {
-    if(!is_array($imageUrl))
-    {
-      $imageUrl = [$imageUrl];
-    }
-
-    $query = new QueryBuilder();
-    foreach($imageUrl as $url)
-    {
-      $query->add('url', $url);
-    }
-
-    return $this->_get('categorizations/' . $category . '?' . $query);
-  }
-
-  /**
-   * @param string          $category
-   * @param string|string[] $contentId
-   *
-   * @return array
+   * @param string|string[] $image
    *
    * @throws ImaggaException
+   *
+   * @return array
    */
-  public function categorizeByContentId($category, $contentId)
+  public function categorize($category, $image)
   {
-    if(!is_array($contentId))
+    if(!is_array($image))
     {
-      $contentId = [$contentId];
-    }
-
-    if(count($contentId) > 30)
-    {
-      throw new ImaggaException('You can only request thirty URLs');
+      $image = [$image];
     }
 
     $query = new QueryBuilder();
-    foreach($contentId as $content)
+    $contents = 0;
+    foreach($image as $v)
     {
-      $query->add('content', $content);
+      if($this->_isContentId($v))
+      {
+        $contents++;
+        $query->add('content', $v);
+      }
+      else
+      {
+        $query->add('url', $v);
+      }
+    }
+
+    if($contents > 30)
+    {
+      throw new ImaggaException('You can only request thirty content IDs');
     }
 
     return $this->_get('categorizations/' . $category . '?' . $query);
@@ -163,23 +133,25 @@ class Imagga
   /**
    * @return array
    */
-  public function getCategories()
+  public function categories()
   {
     return $this->_get('categorizers');
   }
 
   /**
-   * @param string|string[] $imageUrl
+   * @param string|string[] $image
    * @param string|string[] $resolution
-   * @param bool            $allowScale
+   * @param bool            $scale
+   *
+   * @throws ImaggaException
    *
    * @return array
    */
-  public function cropByUrl($imageUrl, $resolution, $allowScale = false)
+  public function crop($image, $resolution, $scale = false)
   {
-    if(!is_array($imageUrl))
+    if(!is_array($image))
     {
-      $imageUrl = [$imageUrl];
+      $image = [$image];
     }
 
     if(!is_array($resolution))
@@ -188,133 +160,71 @@ class Imagga
     }
 
     $query = new QueryBuilder();
-    foreach($imageUrl as $url)
+    $contents = 0;
+    foreach($image as $v)
     {
-      $query->add('url', $url);
+      if($this->_isContentId($v))
+      {
+        $contents++;
+        $query->add('content', $v);
+      }
+      else
+      {
+        $query->add('url', $v);
+      }
     }
     $query->add('resolution', implode(',', $resolution));
-    $query->add('no_scaling', $allowScale ? 0 : 1);
+    $query->add('no_scaling', $scale ? 0 : 1);
+
+    if($contents > 30)
+    {
+      throw new ImaggaException('You can only request thirty content IDs');
+    }
 
     return $this->_get('croppings?' . $query);
   }
 
   /**
-   * @param string|string[] $contentId
-   * @param string|string[] $resolution
-   * @param bool            $allowScale
-   *
-   * @return array
-   *
-   * @throws ImaggaException
-   */
-  public function cropByContentId($contentId, $resolution, $allowScale = false)
-  {
-    if(!is_array($contentId))
-    {
-      $contentId = [$contentId];
-    }
-
-    if(count($contentId) > 30)
-    {
-      throw new ImaggaException('You can only request thirty URLs');
-    }
-
-    if(!is_array($resolution))
-    {
-      $resolution = [$resolution];
-    }
-
-    $query = new QueryBuilder();
-    foreach($contentId as $content)
-    {
-      $query->add('content', $content);
-    }
-    $query->add('resolution', implode(',', $resolution));
-    $query->add('no_scaling', $allowScale ? 0 : 1);
-
-    return $this->_get('croppings?' . $query);
-  }
-
-  /**
-   * @param string|string[] $imageUrl
+   * @param string|string[] $image
    * @param bool            $extractOverallColors
    * @param bool            $extractObjectColors
    *
+   * @throws ImaggaException
+   *
    * @return array
    */
-  public function getColorsByUrl(
-    $imageUrl, $extractOverallColors = true, $extractObjectColors = true
+  public function colors(
+    $image, $extractOverallColors = true, $extractObjectColors = true
   )
   {
-    if(!is_array($imageUrl))
+    if(!is_array($image))
     {
-      $imageUrl = [$imageUrl];
+      $image = [$image];
     }
 
     $query = new QueryBuilder();
-    foreach($imageUrl as $image)
+    $contents = 0;
+    foreach($image as $v)
     {
-      $query->add('url', $image);
+      if($this->_isContentId($v))
+      {
+        $contents++;
+        $query->add('content', $v);
+      }
+      else
+      {
+        $query->add('url', $v);
+      }
     }
     $query->add('extract_overall_colors', $extractOverallColors ? 1 : 0);
     $query->add('extract_object_colors', $extractObjectColors ? 1 : 0);
 
-    return $this->_get('colors?' . $query);
-  }
-
-  /**
-   * @param string|string[] $contentId
-   * @param bool            $extractOverallColors
-   * @param bool            $extractObjectColors
-   *
-   * @return array
-   *
-   * @throws ImaggaException
-   */
-  public function getColorsByContentId(
-    $contentId, $extractOverallColors = true, $extractObjectColors = true
-  )
-  {
-    if(!is_array($contentId))
+    if($contents > 30)
     {
-      $contentId = [$contentId];
+      throw new ImaggaException('You can only request thirty content IDs');
     }
-
-    if(count($contentId) > 30)
-    {
-      throw new ImaggaException('You can only request thirty URLs');
-    }
-
-    $query = new QueryBuilder();
-    foreach($contentId as $content)
-    {
-      $query->add('content', $content);
-    }
-    $query->add('extract_overall_colors', $extractOverallColors ? 1 : 0);
-    $query->add('extract_object_colors', $extractObjectColors ? 1 : 0);
 
     return $this->_get('colors?' . $query);
-  }
-
-  /**
-   * @param string $url
-   *
-   * @return array
-   *
-   * @throws ImaggaException
-   */
-  public function contentUploadByUrl($url)
-  {
-    if(is_array($url))
-    {
-      throw new ImaggaException('You can only request one URL');
-    }
-
-    $params = [
-      'image' => new PostFile(basename($url), file_get_contents($url))
-    ];
-
-    return $this->_post('content', $params);
   }
 
   /**
@@ -325,7 +235,7 @@ class Imagga
    *
    * @return array
    */
-  public function contentUploadByData($data, $filename = null)
+  public function upload($data, $filename = null)
   {
     if(is_array($data))
     {
@@ -349,9 +259,14 @@ class Imagga
    *
    * @return array
    */
-  public function contentDelete($contentId)
+  public function delete($contentId)
   {
     return $this->_delete('content/' . $contentId);
+  }
+
+  private function _isContentId($contentId)
+  {
+    return is_string($contentId) && strlen($contentId) == 32;
   }
 
   /**
